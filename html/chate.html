@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced WebSocket Chat</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/script.js" defer></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <div id="prompt-container" class="prompt-container">
+            <h1>WebSocket Chat</h1>
+            <input id="connection" type="text" placeholder="Enter connection (required)" />
+            <input id="action" type="text" placeholder="Enter action (required)" />
+            <button id="connect-button">Connect</button>
+        </div>
+
+        <div id="chat-container" class="chat-container">
+            <div class="chat-header">
+                <h2>Chat Room</h2>
+                <button id="disconnect-button">Disconnect</button>
+            </div>
+            <div id="chat-box" class="chat-box"></div>
+            <div class="chat-input">
+                <input id="message-input" type="text" placeholder="Type your message here..." />
+                <button id="send-button">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            function getElement(id) {
+                const element = document.getElementById(id);
+                if (!element) {
+                    console.error(`Element with id "${id}" not found`);
+                }
+                return element;
+            }
+
+            const promptContainer = getElement("prompt-container");
+            const chatContainer = getElement("chat-container");
+            const connectButton = getElement("connect-button");
+            const disconnectButton = getElement("disconnect-button");
+            const connectionInput = getElement("connection");
+            const actionInput = getElement("action");
+            const chatBox = getElement("chat-box");
+            const messageInput = getElement("message-input");
+            const sendButton = getElement("send-button");
+
+            let socket;
+
+            function addEventListenerSafely(element, event, handler) {
+                if (element) {
+                    element.addEventListener(event, handler);
+                } else {
+                    console.error(`Cannot add ${event} event listener to null element`);
+                }
+            }
+
+            addEventListenerSafely(connectButton, "click", connectWebSocket);
+            addEventListenerSafely(disconnectButton, "click", disconnectWebSocket);
+            addEventListenerSafely(sendButton, "click", sendMessage);
+            addEventListenerSafely(messageInput, "keypress", (event) => {
+                if (event.key === "Enter") {
+                    sendMessage();
+                }
+            });
+
+            function connectWebSocket() {
+                Gconnection = connectionInput.value.trim();
+                Gaction = actionInput.value.trim();
+
+                if (!Gconnection || !Gaction) {
+                    showAlert("Both connection and action are required!");
+                    return;
+                }
+
+                Gurl = `https://${extractHost(window.location.href)}`;
+
+                const wsUrl = `wss://${extractHost(window.location.href)}/socket/GetConnection?conn=${Gconnection}&action=${Gaction}`;
+                socket = new WebSocket(wsUrl);
+
+                socket.onopen = () => {
+                    promptContainer.style.display = "none";
+                    chatContainer.style.display = "flex";
+                    showAlert("Connected successfully!", "success");
+                };
+
+                socket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    console.log("Received data:", data);
+                    if (data.uid == userId) {
+                        return;
+                    }
+                    displayMessage(data, "received");
+                };
+
+                socket.onerror = (error) => {
+                    showAlert("WebSocket connection failed. Check your inputs or server!");
+                    console.error("WebSocket error:", error);
+                };
+
+                socket.onclose = () => {
+                    showAlert("WebSocket connection closed.");
+                    resetUI();
+                };
+            }
+
+            function disconnectWebSocket() {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.close();
+                }
+            }
+
+            function sendMessage() {
+                if (!messageInput) {
+                    console.error("Message input element not found");
+                    return;
+                }
+                const message = messageInput.value.trim();
+                if (message && socket && socket.readyState === WebSocket.OPEN) {
+                    const messageData = {
+                        uid: userId,
+                        time: new Date().toISOString(),
+                        msg: message
+                    }; console.log(Gurl, "Gurl")
+                    Senddata(`${Gurl}/socket/SendData`, messageData)
+                        .then(data => {
+                            if (data.status == "E") {
+                                showAlert(data.msg);
+                            }
+                        })
+                        .catch(error => {
+                            showAlert(`Error sending message,************,${error}`);
+                        });
+
+
+                    displayMessage(messageData, "sent");
+                    messageInput.value = "";
+                }
+            }
+
+            function displayMessage(messageData, type) {
+
+                if (!chatBox) {
+                    console.error("Chat box element not found");
+                    return;
+                }
+                console.log("messageData", messageData);
+
+                const messageDiv = document.createElement("div");
+                messageDiv.classList.add("message", type);
+
+                const messageContent = document.createElement("div");
+                messageContent.textContent = messageData.msg;
+                messageDiv.appendChild(messageContent);
+
+                const messageInfo = document.createElement("div");
+                messageInfo.classList.add("message-info");
+                const time = new Date(messageData.time).toLocaleTimeString();
+                messageInfo.textContent = `UID: ${messageData.uid} | Time: ${time}`;
+                messageDiv.appendChild(messageInfo);
+
+                chatBox.appendChild(messageDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+
+            function resetUI() {
+                if (chatContainer) chatContainer.style.display = "none";
+                if (promptContainer) promptContainer.style.display = "block";
+                if (chatBox) chatBox.innerHTML = "";
+                if (messageInput) messageInput.value = "";
+            }
+
+        });
+    </script>
+</body>
+
+</html>
