@@ -79,9 +79,11 @@
                     return;
                 }
 
-                Gurl = `https://${extractHost(window.location.href)}`;
+                const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
 
-                const wsUrl = `wss://${extractHost(window.location.href)}/socket/GetConnection?conn=${Gconnection}&action=${Gaction}`;
+                Gurl = `${window.location.protocol}//${extractHost(window.location.href)}`;
+
+                const wsUrl = `${protocol}${extractHost(window.location.href)}/socket/GetConnection?conn=${Gconnection}&action=${Gaction}`;
                 socket = new WebSocket(wsUrl);
 
                 socket.onopen = () => {
