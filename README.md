@@ -103,7 +103,6 @@ The `main()` function initializes the server and defines the routes.
 |--------|---------------------------|-------------------------------------------|
 | `GET`  | `/GetConnection`          | Establishes a WebSocket connection.       |
 | `POST` | `/SendData`               | Sends data to connected WebSocket clients.|
-| `ANY`  | (Undefined routes)        | Redirects to the base API path.           |
 
 ---
 
