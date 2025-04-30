@@ -13,10 +13,10 @@ import (
 
 func main() {
 	// Generate a self-signed certificate
-	certFile, keyFile, err := base.GenerateSelfSignedCert()
-	if err != nil {
-		log.Fatalf("Error in generating self-signed certificate: %v", err)
-	}
+	// certFile, keyFile, err := base.GenerateSelfSignedCert()
+	// if err != nil {
+	// 	log.Fatalf("Error in generating self-signed certificate: %v", err)
+	// }
 
 	// fmt.Println("Certificate file:", certFile)
 	// fmt.Println("Key file:", keyFile)
@@ -56,10 +56,10 @@ func main() {
 	// Start the server with TLS
 	log.Printf("WebSocket server is running at http://localhost:%s...", base.GPortNo)
 
-	// if err := r.Run(":" + base.GPortNo); err != nil {
-	// 	log.Fatalf("Server error: %v", err)
-	// }
-	if err := r.RunTLS(fmt.Sprintf(":%s", base.GPortNo), certFile, keyFile); err != nil {
+	if err := r.Run(":" + base.GPortNo); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
+	// if err := r.RunTLS(fmt.Sprintf(":%s", base.GPortNo), certFile, keyFile); err != nil {
+	// 	log.Fatalf("Server error: %v", err)
+	// }
 }
